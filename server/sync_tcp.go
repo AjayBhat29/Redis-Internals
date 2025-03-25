@@ -1,28 +1,44 @@
 package server
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"net"
 	"strconv"
+	"strings"
 
 	"github.com/AjayBhat29/Redis-Internals/config"
+	"github.com/AjayBhat29/Redis-Internals/core"
 )
 
-func readCommand(c net.Conn) (string, error) {
+func readCommand(conn net.Conn) (*core.RedisCmd, error) {
 	var buf []byte = make([]byte, 512)
-	n, err := c.Read(buf[:])
+	n, err := conn.Read(buf[:])
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return string(buf[0:n]), nil
+
+	tokens, err := core.DecodeArrayString(buf[:n])
+	if err != nil {
+		return nil, err
+	}
+
+	return &core.RedisCmd{
+		Cmd:  strings.ToUpper(tokens[0]),
+		Args: tokens[1:],
+	}, nil
 }
 
-func respond(cmd string, c net.Conn) error {
-	if _, err := c.Write([]byte(cmd)); err != nil {
-		return err
+func respondError(err error, conn net.Conn) {
+	conn.Write([]byte(fmt.Sprintf("-%s\r\n", err.Error())))
+}
+
+func respond(cmd *core.RedisCmd, conn net.Conn) {
+	err := core.EvaluateAndRespond(cmd, conn)
+	if err != nil {
+		respondError(err, conn)
 	}
-	return nil
 }
 
 func RunSyncTCPServer() {
@@ -36,30 +52,27 @@ func RunSyncTCPServer() {
 	}
 
 	for {
-		c, err := listener.Accept()
+		conn, err := listener.Accept()
 		if err != nil {
 			panic(err)
 		}
 
 		concurrent_clients++
-		log.Println("Client connected with address", c.RemoteAddr().String(), "Number of clients:", concurrent_clients)
+		log.Println("Client connected with address", conn.RemoteAddr().String(), "Number of clients:", concurrent_clients)
 
 		for {
-			cmd, err := readCommand(c)
+			cmd, err := readCommand(conn)
 			if err != nil {
-				c.Close()
+				conn.Close()
 				concurrent_clients--
-				log.Println("Client disconnected with address", c.RemoteAddr().String(), "Number of clients:", concurrent_clients)
+				log.Println("Client disconnected with address", conn.RemoteAddr().String(), "Number of clients:", concurrent_clients)
 				if err == io.EOF {
 					break
 				}
 				log.Println("Error reading command. Got:", err)
 			}
 
-			log.Println("Command received:", cmd)
-			if err = respond(cmd, c); err != nil {
-				log.Print("Error responding. Got:", err)
-			}
+			respond(cmd, conn)
 		}
 	}
 
