@@ -12,7 +12,7 @@ import (
 	"github.com/AjayBhat29/Redis-Internals/core"
 )
 
-func readCommand(conn net.Conn) (*core.RedisCmd, error) {
+func readCommand(conn io.ReadWriter) (*core.RedisCmd, error) {
 	var buf []byte = make([]byte, 512)
 	n, err := conn.Read(buf[:])
 	if err != nil {
@@ -30,11 +30,11 @@ func readCommand(conn net.Conn) (*core.RedisCmd, error) {
 	}, nil
 }
 
-func respondError(err error, conn net.Conn) {
+func respondError(err error, conn io.ReadWriter) {
 	conn.Write([]byte(fmt.Sprintf("-%s\r\n", err.Error())))
 }
 
-func respond(cmd *core.RedisCmd, conn net.Conn) {
+func respond(cmd *core.RedisCmd, conn io.ReadWriter) {
 	err := core.EvaluateAndRespond(cmd, conn)
 	if err != nil {
 		respondError(err, conn)
@@ -48,13 +48,14 @@ func RunSyncTCPServer() {
 
 	listener, err := net.Listen("tcp", config.HOST+":"+strconv.Itoa(config.PORT))
 	if err != nil {
-		panic(err)
+		log.Println("Error starting server:", err)
+		return
 	}
 
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			panic(err)
+			log.Println("Error: ", err)
 		}
 
 		concurrent_clients++
