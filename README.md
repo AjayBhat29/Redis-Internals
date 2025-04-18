@@ -4,7 +4,7 @@ A lightweight Redis-compatible server implementation in Go, focused on understan
 
 ## Overview
 
-Redis Internals is an educational project that implements core Redis functionality in Go. The project aims to provide insight into how Redis works under the hood by building a simplified version from scratch. It implements the Redis Serialization Protocol (RESP) and provides both synchronous and asynchronous server implementations.
+The project aims to provide insight into how Redis works under the hood by building a simplified version from scratch. It implements the Redis Serialization Protocol (RESP) and provides both synchronous and asynchronous server implementations.
 
 ## Features
 
@@ -14,6 +14,12 @@ Redis Internals is an educational project that implements core Redis functionali
 - TCP server implementations
 - Synchronous server
 - Asynchronous server using epoll
+- Core Redis command implementations:
+
+  - `GET`, `SET`, `TTL`
+  - `DEL`, `EXPIRE`
+  - Auto-deletion of expired keys
+- Eviction strategy support (e.g., Simple-First)
 
 ### Redis Serialization Protocol (RESP)
 
@@ -49,11 +55,25 @@ The server implementation in `async_tcp.go` demonstrates how Redis achieves its 
 
 This implementation mirrors Redis's efficient approach to handling network I/O without the complexity of multi-threading, while maintaining high performance and throughput.
 
+### Command Support
+
+The project now supports several essential Redis commands, mimicking their behavior:
+
+- **GET**: Retrieve the value of a key
+- **SET**: Assign a value to a key
+- **TTL**: Return the remaining time to live for a key
+- **DEL**: Remove a key from the store
+- **EXPIRE**: Set a time-to-live on a key
+- **Auto-deletion**: Expired keys are automatically purged
+- **Eviction strategy**: Implements a simple-first policy when memory limits are approached
+
+These features closely follow Redis semantics and provide a strong foundation for experimenting with more advanced Redis internals.
+
 ## Future Work
 
-* Add support for more Redis commands
 * Implement data structures (strings, lists, sets, hashes, sorted sets)
-* Add persistence mechanisms
+* Add persistence mechanisms (AOF)
+* Extend eviction strategies (LRU, LFU, etc.)
 
 ## I/O Multiplexing and Event Loops
 
