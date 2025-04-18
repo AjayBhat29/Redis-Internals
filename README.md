@@ -69,12 +69,6 @@ The project now supports several essential Redis commands, mimicking their behav
 
 These features closely follow Redis semantics and provide a strong foundation for experimenting with more advanced Redis internals.
 
-## Future Work
-
-* Implement data structures (strings, lists, sets, hashes, sorted sets)
-* Add persistence mechanisms (AOF)
-* Extend eviction strategies (LRU, LFU, etc.)
-
 ## I/O Multiplexing and Event Loops
 
 Redis uses an event-driven architecture:
@@ -83,6 +77,12 @@ Redis uses an event-driven architecture:
 - **System Call Optimization**: Uses epoll (Linux), kqueue (BSD), or IOCP (Windows)
 - **File Descriptor Monitoring**: Checks for I/O readiness without blocking
 - **Non-Blocking I/O**: Performs I/O operations only when data is ready
+
+## Future Work
+
+* Implement data structures (strings, lists, sets, hashes, sorted sets)
+* Add persistence mechanisms (AOF)
+* Extend eviction strategies (LRU, LFU, etc.)
 
 ## Acknowledgements
 
