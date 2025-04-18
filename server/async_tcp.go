@@ -4,12 +4,15 @@ import (
 	"log"
 	"net"
 	"syscall"
+	"time"
 
 	"github.com/AjayBhat29/Redis-Internals/config"
 	"github.com/AjayBhat29/Redis-Internals/core"
 )
 
 var concurrent_clients int = 0
+var cronFrequency time.Duration = 1 * time.Second
+var lastCronExecTime time.Time = time.Now()
 
 func RunAsyncTCPServer() error {
 	log.Println("Starting asynchronous TCP server on ", config.HOST, ":", config.PORT)
@@ -67,6 +70,10 @@ func RunAsyncTCPServer() error {
 
 	// Start the event loop
 	for {
+		if time.Now().After(lastCronExecTime.Add(cronFrequency)) {
+			core.DeleteExpiredKeys()
+			lastCronExecTime = time.Now()
+		}
 		//See if any FD is ready for an IO
 		nevents, e := syscall.EpollWait(epollFD, events[:], -1)
 		if e != nil {

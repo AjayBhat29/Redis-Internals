@@ -12,8 +12,8 @@ Redis Internals is an educational project that implements core Redis functionali
 - Support for Simple Strings, Errors, Integers, Bulk Strings, and Arrays
 - Encoding and decoding of RESP data types
 - TCP server implementations
-- Synchronous server (complete)
-- Asynchronous server using epoll (in progress)
+- Synchronous server
+- Asynchronous server using epoll
 
 ### Redis Serialization Protocol (RESP)
 
@@ -33,13 +33,24 @@ RESP is the communication protocol used by Redis:
 
 The synchronous server handles each client connection in a blocking manner. It reads commands, processes them, and returns responses sequentially.
 
-#### Asynchronous TCP Server (In Progress)
+#### Asynchronous TCP Server
 
 The asynchronous server will use the `epoll` system call to handle multiple connections efficiently without using multiple threads or processes.
 
+The server implementation in `async_tcp.go` demonstrates how Redis achieves its impressive performance through efficient I/O handling. By only performing read system calls when there's data to be read, and by using epoll to monitor socket readiness, we avoid unnecessary waiting and context switching.
+
+### How It Works
+
+1. The server creates an epoll instance using `EpollCreate1()`
+2. It registers the server socket to be monitored for incoming connections
+3. The event loop continually checks for I/O-ready file descriptors using `EpollWait()`
+4. When a new client connects, their socket is added to the epoll instance for monitoring
+5. When a client socket is ready for reading, data is processed and a response is sent
+
+This implementation mirrors Redis's efficient approach to handling network I/O without the complexity of multi-threading, while maintaining high performance and throughput.
+
 ## Future Work
 
-* Complete the asynchronous server implementation
 * Add support for more Redis commands
 * Implement data structures (strings, lists, sets, hashes, sorted sets)
 * Add persistence mechanisms
